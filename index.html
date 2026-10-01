@@ -143,29 +143,58 @@
   @media(prefers-color-scheme:dark){.toast{background:#EDEDEA;color:#111}}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .hidden-input{display:none}
+  .hidden{display:none!important}
+  button.pill{font-family:inherit}
   .compare{display:flex;gap:8px;align-items:center;font-size:11px;font-weight:700}
   .compare .from{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;padding:4px 7px;border-radius:999px}
   .compare .to{background:var(--accent-light);color:var(--accent);padding:4px 7px;border-radius:999px}
   @media(prefers-color-scheme:dark){.compare .from{background:#2A1212;color:#FCA5A5;border-color:#451A1A}}
+  /* video watermark remover */
+  .top-links{flex-wrap:wrap;justify-content:flex-end}
+  @media(max-width:640px){.topbar{flex-direction:column;align-items:flex-start}.top-links{justify-content:flex-start}}
+  .stage{position:relative;margin:18px;border-radius:16px;overflow:hidden;background:#000;line-height:0}
+  .stage video{width:100%;height:auto;display:block}
+  .wm-box{position:absolute;border:2px dashed var(--accent);background:rgba(14,122,107,.20);cursor:move;touch-action:none;line-height:normal;min-width:24px;min-height:18px}
+  .wm-box .wm-tag{position:absolute;top:2px;left:2px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;pointer-events:none}
+  .wm-handle{position:absolute;right:-9px;bottom:-9px;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2.5px solid #fff;cursor:nwse-resize;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+  .video-controls{display:flex;align-items:center;gap:10px;margin:2px 18px 4px}
+  .video-controls input[type=range]{flex:1}
+  .time-label{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);white-space:nowrap}
+  .play-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface);color:var(--text);font-size:13px;display:grid;place-items:center;flex-shrink:0}
+  .preset-row{display:flex;gap:8px;flex-wrap:wrap;padding:10px 18px 0;align-items:center}
+  .preset-row>span{font-size:12px;font-weight:700;color:var(--muted)}
+  .region-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:12px 18px 4px}
+  @media(max-width:700px){.region-grid{grid-template-columns:1fr 1fr}}
+  .region-grid .field label{margin-bottom:2px}
+  .proc-wrap{padding:14px 18px 6px;display:none}
+  .proc-wrap.on{display:block}
+  .proc-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;font-weight:700;margin-bottom:8px}
+  .proc-bar{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+  .proc-bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+  .result-wrap{padding:8px 18px 18px;display:none}
+  .result-wrap.on{display:block}
+  .result-wrap video{width:100%;border-radius:14px;background:#000;display:block}
+  .result-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .result-meta{font-size:12.5px;color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="topbar">
     <div class="brand">
-      <div class="brand-mark">JF<span>›</span>JP</div>
-      <div class="brand-text"><strong>JFIF to JPG</strong><small>Free online converter</small></div>
+      <div class="brand-mark" id="brandMark">JF<span>›</span>JP</div>
+      <div class="brand-text"><strong id="brandName">JFIF to JPG</strong><small>Free online converter</small></div>
     </div>
     <nav class="top-links" aria-label="Converters">
-      <span class="pill active">JFIF → JPG</span>
-      <span class="pill">Batch</span>
-      <span class="pill">No upload</span>
+      <button class="pill active" id="modeJfifBtn" type="button">JFIF → JPG</button>
+      <button class="pill" id="modeM4aBtn" type="button">M4A → MP3</button>
+      <button class="pill" id="modeVideoBtn" type="button">AI Watermark Remover</button>
     </nav>
   </header>
 
   <section class="hero">
-    <h1>Convert <em>JFIF</em> to JPG<br>in seconds.</h1>
-    <p>Drop your .jfif files below and get standard .jpg images instantly. Everything runs in your browser — your files never leave this device.</p>
+    <h1 id="heroTitle">Convert <em>JFIF</em> to JPG<br>in seconds.</h1>
+    <p id="heroSub">Drop your .jfif files below and get standard .jpg images instantly. Everything runs in your browser — your files never leave this device.</p>
     <div class="hero-meta">
       <span><i class="dot"></i> 100% free</span>
       <span><i class="dot"></i> No sign-up</span>
@@ -174,6 +203,7 @@
     </div>
   </section>
 
+  <div id="imageMode">
   <main class="card" id="converter">
     <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drop JFIF files here or click to browse">
       <div class="drop-icon">⇪</div>
@@ -286,8 +316,258 @@
       <div class="faq-a">Many upload validators only whitelist .jpg / .jpeg / .png. They reject .jfif even though the bytes are valid JPEG. Renaming sometimes works, but a proper re-encode — like this tool does — guarantees a standard JPG header and metadata layout.</div>
     </div>
   </section>
+  </div><!-- /imageMode -->
 
-  <p style="text-align:center;color:var(--muted2);font-size:12px;margin-top:22px;line-height:1.6">Files are processed locally in your browser and are never sent to a server.<br>Built for quick, private JFIF → JPG conversion.</p>
+  <div id="audioMode" class="hidden">
+  <main class="card" id="audioConverter">
+    <div class="dropzone" id="audioDropzone" tabindex="0" role="button" aria-label="Drop M4A files here or click to browse">
+      <div class="drop-icon">♪</div>
+      <h2>Drag &amp; drop M4A files here</h2>
+      <p>or choose files from your computer. Convert voice memos and audio<br class="hide-mobile"> to MP3 files that play everywhere.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="audioBrowseBtn" type="button">Select Files</button>
+      </div>
+      <div class="format-line">Supports <b>.M4A</b> <b>.MP4</b> <b>.AAC</b> <b>.WAV</b> — converts to <b>.MP3</b>, max 50 files at once</div>
+      <input class="hidden-input" id="audioFileInput" type="file" accept=".m4a,.mp4,.aac,.wav,.ogg,.flac,audio/mp4,audio/aac,audio/wav,audio/x-m4a" multiple>
+    </div>
+
+    <div class="options" aria-label="MP3 conversion options">
+      <div class="field">
+        <label>MP3 Bitrate</label>
+        <select id="bitrate" class="select">
+          <option value="128">128 kbps · Standard</option>
+          <option value="192" selected>192 kbps · Good</option>
+          <option value="256">256 kbps · High</option>
+          <option value="320">320 kbps · Maximum</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Channels</label>
+        <select id="channelsMode" class="select">
+          <option value="orig" selected>Keep original</option>
+          <option value="stereo">Stereo</option>
+          <option value="mono">Mono (smaller)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Sample rate</label>
+        <select id="sampleRateMode" class="select">
+          <option value="orig" selected>Keep original</option>
+          <option value="48000">48 kHz</option>
+          <option value="44100">44.1 kHz</option>
+          <option value="22050">22.05 kHz</option>
+        </select>
+      </div>
+      <button class="btn btn-dark" id="audioConvertAllBtn" type="button" disabled style="height:42px;padding:0 22px;white-space:nowrap">Convert All →</button>
+    </div>
+
+    <div class="file-head">
+      <div><strong>Your files</strong> <span id="audioFileCountLabel">— No files yet</span></div>
+      <div class="head-actions">
+        <button class="small-btn" id="audioAddMoreBtn" type="button">+ Add more</button>
+        <button class="small-btn" id="audioClearBtn" type="button">Clear all</button>
+      </div>
+    </div>
+
+    <div class="list" id="audioFileList">
+      <div class="empty" id="audioEmptyState">
+        <div style="font-size:22px;margin-bottom:6px">♪</div>
+        No files added yet.<br>Drop M4A audio above to get started — conversion happens locally, nothing is uploaded.
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <div class="stats" id="audioStatsLine">Add files to see total size.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" id="audioDownloadAllBtn" type="button" disabled style="padding:10px 16px">Download All (.zip)</button>
+        <button class="btn btn-primary" id="audioConvertBottomBtn" type="button" disabled style="padding:10px 18px">Convert</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><h4>Add your M4A files</h4><p>Drag &amp; drop or browse — iPhone Voice Memos, iTunes audio and other .m4a files all work.</p></div>
+    <div class="step"><div class="step-num">2</div><h4>Pick a bitrate</h4><p>192 kbps is the sweet spot for most audio. Go 320 kbps for music, 128 kbps for voice to save space.</p></div>
+    <div class="step"><div class="step-num">3</div><h4>Download MP3s</h4><p>Save files one by one or download everything together as a single ZIP.</p></div>
+  </div>
+
+  <div class="grid2">
+    <article class="info-card">
+      <h3>What is an M4A file?</h3>
+      <p>M4A is an MPEG-4 audio file, usually encoded with AAC. It's the default format for iPhone <b>Voice Memos</b>, and it's also what iTunes and Apple Music downloads use. The quality is excellent for its size.</p>
+      <p style="margin-top:8px">The catch: many car stereos, older media players, Windows apps, and upload forms still can't play or accept .m4a. Converting to <b>.mp3</b> gives you the most widely supported audio format there is.</p>
+    </article>
+    <article class="info-card">
+      <h3>M4A vs MP3 — what's the difference?</h3>
+      <ul>
+        <li><b>Compatibility:</b> MP3 plays virtually everywhere. M4A support is common but not universal.</li>
+        <li><b>Quality:</b> AAC (M4A) is slightly more efficient than MP3 at the same bitrate.</li>
+        <li><b>This tool:</b> Decodes the M4A and re-encodes it as MP3 in your browser. Re-encoding a lossy format loses a little quality — choose 256–320 kbps to keep it minimal.</li>
+      </ul>
+    </article>
+  </div>
+
+  <section class="faq" id="audioFaq">
+    <div class="faq-item open">
+      <button class="faq-q" type="button">Is this converter really free? <span class="chev">⌄</span></button>
+      <div class="faq-a">Yes. There is no sign-up, no watermark, and no file-count paywall. Conversion runs entirely in your browser using the Web Audio API and an MP3 encoder, so there are no server costs to pass on.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Are my audio files uploaded anywhere? <span class="chev">⌄</span></button>
+      <div class="faq-a">No. Files are decoded and re-encoded locally on your device. Nothing is sent to a server — you can even go offline after the page loads and it will still convert (the MP3 encoder library loads once from a CDN).</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Will I lose quality converting M4A to MP3? <span class="chev">⌄</span></button>
+      <div class="faq-a">A little. M4A (AAC) and MP3 are both lossy formats, so re-encoding can soften detail slightly. At 256–320 kbps the difference is usually inaudible. For voice memos and spoken audio, 128–192 kbps is more than enough. The original file is never modified.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Why won't my .m4a file play in some apps? <span class="chev">⌄</span></button>
+      <div class="faq-a">Some players, car stereos, DJ software, and upload forms only accept MP3/WAV. Others lack an AAC decoder. Converting to MP3 sidesteps all of that — it has been the universal audio format for over two decades.</div>
+    </div>
+  </section>
+  </div><!-- /audioMode -->
+
+  <div id="videoMode" class="hidden">
+  <main class="card" id="videoConverter">
+    <div class="dropzone" id="videoDropzone" tabindex="0" role="button" aria-label="Drop a video file here or click to browse">
+      <div class="drop-icon">🎬</div>
+      <h2>Drag &amp; drop your video here</h2>
+      <p>or choose a video from your device. Scrub to the watermark,<br class="hide-mobile"> drag the box over it, and remove it.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="videoBrowseBtn" type="button">Select Video</button>
+      </div>
+      <div class="format-line">Supports <b>.MP4</b> <b>.WEBM</b> <b>.MOV</b> and other browser-playable video — 1 video at a time</div>
+      <input class="hidden-input" id="videoFileInput" type="file" accept="video/*,.mp4,.webm,.mov,.m4v,.mkv">
+    </div>
+
+    <div id="videoStageWrap" class="hidden">
+      <div class="file-head">
+        <div><strong>Your video</strong> <span id="videoFileLabel">—</span></div>
+        <div class="head-actions">
+          <button class="small-btn" id="videoChangeBtn" type="button">Change video</button>
+          <button class="small-btn" id="videoClearBtn" type="button">Remove</button>
+        </div>
+      </div>
+      <div class="stage" id="videoStage">
+        <video id="wmVideo" playsinline preload="metadata"></video>
+        <div class="wm-box" id="wmBox"><span class="wm-tag">Watermark area</span><div class="wm-handle" id="wmHandle"></div></div>
+      </div>
+      <div class="video-controls">
+        <button class="play-btn" id="wmPlayBtn" type="button" aria-label="Play or pause preview">▶</button>
+        <input type="range" id="wmSeek" min="0" max="100" value="0" step="0.1" aria-label="Seek">
+        <span class="time-label" id="wmTime">0:00 / 0:00</span>
+      </div>
+      <div class="preset-row">
+        <span>Quick place:</span>
+        <button class="small-btn" type="button" data-preset="tl">Top left</button>
+        <button class="small-btn" type="button" data-preset="tr">Top right</button>
+        <button class="small-btn" type="button" data-preset="bl">Bottom left</button>
+        <button class="small-btn" type="button" data-preset="br">Bottom right</button>
+        <button class="small-btn" type="button" data-preset="center">Center</button>
+      </div>
+      <div class="region-grid" aria-label="Watermark area position">
+        <div class="field"><label>Left <output id="regXOut">68%</output></label><input type="range" id="regX" min="0" max="98" value="68" step="0.5"></div>
+        <div class="field"><label>Top <output id="regYOut">74%</output></label><input type="range" id="regY" min="0" max="98" value="74" step="0.5"></div>
+        <div class="field"><label>Width <output id="regWOut">26%</output></label><input type="range" id="regW" min="2" max="100" value="26" step="0.5"></div>
+        <div class="field"><label>Height <output id="regHOut">16%</output></label><input type="range" id="regH" min="2" max="100" value="16" step="0.5"></div>
+      </div>
+    </div>
+
+    <div class="options" aria-label="Removal options">
+      <div class="field">
+        <label>Removal method</label>
+        <select id="wmMethod" class="select">
+          <option value="smart" selected>Smart fill · blends edges</option>
+          <option value="blur">Blur · softens the area</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Output quality</label>
+        <select id="wmQuality" class="select">
+          <option value="12000000">High</option>
+          <option value="8000000" selected>Balanced</option>
+          <option value="4000000">Smaller file</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Audio</label>
+        <select id="wmAudio" class="select">
+          <option value="keep" selected>Keep original audio</option>
+          <option value="mute">Remove audio</option>
+        </select>
+      </div>
+      <button class="btn btn-dark" id="wmProcessBtn" type="button" disabled style="height:42px;padding:0 22px;white-space:nowrap">Remove Watermark →</button>
+    </div>
+
+    <div class="proc-wrap" id="videoProcWrap">
+      <div class="proc-head"><span id="videoProcLabel">Processing…</span><button class="small-btn" id="wmCancelBtn" type="button">Cancel</button></div>
+      <div class="proc-bar"><i id="videoProcBar"></i></div>
+    </div>
+
+    <div class="result-wrap" id="videoResultWrap">
+      <div class="file-head" style="border-top:0;padding-left:0;padding-right:0">
+        <div><strong>Cleaned video</strong> <span id="videoResultMeta" class="result-meta"></span></div>
+      </div>
+      <video id="wmResult" controls playsinline></video>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="wmDownloadBtn" type="button" style="padding:10px 18px">Download Cleaned Video</button>
+        <button class="btn btn-secondary" id="wmOpenBtn" type="button" style="padding:10px 16px">Open in new tab ↗</button>
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <div class="stats" id="videoStatsLine">Add a video to get started — removal runs locally, nothing is uploaded.</div>
+    </div>
+  </main>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><h4>Add your video</h4><p>Drop in an MP4, WebM or MOV. It loads right here in the page — never uploaded anywhere.</p></div>
+    <div class="step"><div class="step-num">2</div><h4>Box the watermark</h4><p>Scrub through the video, then drag the dashed box over the watermark and size it with the corner handle.</p></div>
+    <div class="step"><div class="step-num">3</div><h4>Remove &amp; download</h4><p>The video is re-rendered frame by frame with the boxed area blended away. Download the cleaned copy.</p></div>
+  </div>
+
+  <div class="grid2">
+    <article class="info-card">
+      <h3>How the removal works</h3>
+      <p><b>Smart fill</b> rebuilds the boxed area by blending the pixels along its edges inward, so plain backgrounds, skies, walls and gradients close over the watermark seamlessly.</p>
+      <p style="margin-top:8px"><b>Blur</b> heavily softens the boxed area instead — a good fallback for busy, moving backgrounds where a fill would smear.</p>
+    </article>
+    <article class="info-card">
+      <h3>Good to know</h3>
+      <ul>
+        <li><b>Best results:</b> Corner logos and captions on fairly even backgrounds.</li>
+        <li><b>Real-time:</b> Processing plays the video through once, so a 2-minute clip takes about 2 minutes. Keep this tab open while it runs.</li>
+        <li><b>Output:</b> A WebM (or MP4, where supported) up to 1280px wide, with the original audio kept.</li>
+        <li><b>Moving watermarks:</b> The box is fixed — it can't track a watermark that moves around the frame.</li>
+      </ul>
+    </article>
+  </div>
+
+  <section class="faq" id="videoFaq">
+    <div class="faq-item open">
+      <button class="faq-q" type="button">Is this watermark remover really free? <span class="chev">⌄</span></button>
+      <div class="faq-a">Yes. No sign-up and no limits in this page. Removal runs entirely in your browser using the Canvas and MediaRecorder APIs, so there are no server costs to pass on.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Is my video uploaded anywhere? <span class="chev">⌄</span></button>
+      <div class="faq-a">No. The video is read locally, re-rendered frame by frame on your device, and the cleaned file is generated in the page. Nothing is sent to a server.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">How long does removal take? <span class="chev">⌄</span></button>
+      <div class="faq-a">Roughly the length of the video — it is processed in real time as it plays through once. Keep the tab visible while it runs, and don't switch away, or the render may stall.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Will the watermark be completely invisible? <span class="chev">⌄</span></button>
+      <div class="faq-a">On even backgrounds, usually yes. Over detailed or fast-moving scenes, Smart fill can leave a soft smudge — try the Blur method, or tighten the box so it covers only the watermark itself with as little extra area as possible.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Why won't my video load? <span class="chev">⌄</span></button>
+      <div class="faq-a">The remover can only open formats your browser can play (MP4/H.264, WebM, most MOV files). Exotic codecs like HEVC in some browsers, or MKV files, may not load — convert those to MP4 first.</div>
+    </div>
+  </section>
+  </div><!-- /videoMode -->
+
+  <p style="text-align:center;color:var(--muted2);font-size:12px;margin-top:22px;line-height:1.6">Files are processed locally in your browser and are never sent to a server.<br>Built for quick, private JFIF → JPG conversion, M4A → MP3 conversion, and video watermark removal.</p>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -449,6 +729,9 @@
       var dl=document.createElement('button'); dl.className='dl-btn'; dl.type='button'; dl.textContent='Download';
       dl.addEventListener('click', function(){ downloadItem(item); });
       actions.appendChild(dl);
+      var openBtn=document.createElement('button'); openBtn.className='icon-btn'; openBtn.type='button'; openBtn.title='Open JPG in a new tab (save it from there if the download is blocked)'; openBtn.textContent='↗';
+      openBtn.addEventListener('click', function(){ openItem(item); });
+      actions.appendChild(openBtn);
     }
     var conv=document.createElement('button'); conv.className='icon-btn'; conv.type='button'; conv.title='Convert this file'; conv.textContent='↻';
     conv.addEventListener('click', function(){ convertItem(item).then(updateUI); });
@@ -546,6 +829,7 @@
             item.status='done';
           } else {
             item.status='waiting';
+            showToast('Could not create the JPG for "'+item.name+'" — try Resize: Max width 1920px, then convert again.');
           }
           refreshRow(item);
           resolve(item);
@@ -572,19 +856,41 @@
     });
   }
 
+  function triggerDownload(url, name){
+    var a=document.createElement('a');
+    a.href=url;
+    a.download=name;
+    a.rel='noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ a.remove(); }, 150);
+  }
+  function ensureBlobUrl(item){
+    if(!item.blobUrl && item.blob) item.blobUrl=URL.createObjectURL(item.blob);
+    return item.blobUrl;
+  }
+  function openItem(item){
+    var url=ensureBlobUrl(item);
+    if(!url) return;
+    var w=window.open(url, '_blank');
+    if(w){
+      try{ w.opener=null; }catch(e){}
+      showToast('Opened '+item.outName+' — use your browser\'s Save or Share to keep it.');
+    } else {
+      showToast('Pop-up blocked — allow pop-ups for this page, or try Download again.');
+    }
+  }
   function downloadItem(item){
     if(!item.blob) return;
-    var a=document.createElement('a');
-    a.href=item.blobUrl || URL.createObjectURL(item.blob);
-    a.download=item.outName;
-    document.body.appendChild(a); a.click(); a.remove();
+    triggerDownload(ensureBlobUrl(item), item.outName);
+    showToast('Downloading '+item.outName+' — if nothing appears, tap ↗ to open it and save from the new tab.');
   }
 
   function downloadAllZip(){
     var doneItems=items.filter(function(i){return i.status==='done' && i.blob;});
     if(!doneItems.length){ showToast('Convert files first, then download the ZIP.'); return; }
     if(doneItems.length===1){ downloadItem(doneItems[0]); return; }
-    if(typeof JSZip==='undefined'){ showToast('ZIP library still loading — try again in a second, or download files individually.'); doneItems.forEach(function(it,i){ setTimeout(function(){ downloadItem(it); }, i*350); }); return; }
+    if(typeof JSZip==='undefined'){ showToast('ZIP is still loading — wait a second and try again, or use the Download button on each file.'); return; }
     downloadAllBtn.disabled=true; downloadAllBtn.textContent='Building ZIP…';
     var zip=new JSZip();
     var used={};
@@ -596,14 +902,13 @@
     });
     zip.generateAsync({type:'blob'}).then(function(blob){
       var url=URL.createObjectURL(blob);
-      var a=document.createElement('a'); a.href=url; a.download='jpg-images.zip'; document.body.appendChild(a); a.click(); a.remove();
+      triggerDownload(url, 'jpg-images.zip');
       setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
       downloadAllBtn.disabled=false; downloadAllBtn.textContent='Download All (.zip)';
-      showToast('ZIP downloaded with '+doneItems.length+' JPGs.');
+      showToast('Downloading jpg-images.zip with '+doneItems.length+' JPGs — if nothing appears, download files individually instead.');
     }).catch(function(){
       downloadAllBtn.disabled=false; downloadAllBtn.textContent='Download All (.zip)';
-      showToast('ZIP failed — downloading files individually instead.');
-      doneItems.forEach(function(it,i){ setTimeout(function(){ downloadItem(it); }, i*350); });
+      showToast('ZIP failed — use the Download button on each file instead.');
     });
   }
 
@@ -650,6 +955,890 @@
 
   syncQuality();
   updateUI();
+})();
+</script>
+<script>
+(function(){
+  // ---------- Mode switching ----------
+  var jfifBtn = document.getElementById('modeJfifBtn');
+  var m4aBtn = document.getElementById('modeM4aBtn');
+  var videoBtn = document.getElementById('modeVideoBtn');
+  var imageMode = document.getElementById('imageMode');
+  var audioMode = document.getElementById('audioMode');
+  var videoMode = document.getElementById('videoMode');
+  var heroTitle = document.getElementById('heroTitle');
+  var heroSub = document.getElementById('heroSub');
+  var brandMark = document.getElementById('brandMark');
+  var brandName = document.getElementById('brandName');
+
+  function setMode(mode){
+    var audio = mode === 'audio';
+    var video = mode === 'video';
+    imageMode.classList.toggle('hidden', audio || video);
+    audioMode.classList.toggle('hidden', !audio);
+    videoMode.classList.toggle('hidden', !video);
+    jfifBtn.classList.toggle('active', mode === 'image');
+    m4aBtn.classList.toggle('active', audio);
+    videoBtn.classList.toggle('active', video);
+    if(video){
+      document.title = 'AI Video Watermark Remover';
+      heroTitle.innerHTML = 'Remove <em>watermarks</em> from<br>video in seconds.';
+      heroSub.textContent = 'Drop a video below, drag the box over the watermark, and get a cleaned copy. Everything runs in your browser — your files never leave this device.';
+      brandMark.innerHTML = 'AI<span>›</span>WM';
+      brandName.textContent = 'Watermark Remover';
+    } else if(audio){
+      document.title = 'M4A to MP3 Converter';
+      heroTitle.innerHTML = 'Convert <em>M4A</em> to MP3<br>in seconds.';
+      heroSub.textContent = 'Drop your .m4a files below and get MP3s that play anywhere. Everything runs in your browser — your files never leave this device.';
+      brandMark.innerHTML = 'M4<span>›</span>MP';
+      brandName.textContent = 'M4A to MP3';
+    } else {
+      document.title = 'JFIF to JPG Converter';
+      heroTitle.innerHTML = 'Convert <em>JFIF</em> to JPG<br>in seconds.';
+      heroSub.textContent = 'Drop your .jfif files below and get standard .jpg images instantly. Everything runs in your browser — your files never leave this device.';
+      brandMark.innerHTML = 'JF<span>›</span>JP';
+      brandName.textContent = 'JFIF to JPG';
+    }
+  }
+  jfifBtn.addEventListener('click', function(){ setMode('image'); });
+  m4aBtn.addEventListener('click', function(){ setMode('audio'); });
+  videoBtn.addEventListener('click', function(){ setMode('video'); });
+
+  // ---------- Audio converter ----------
+  var dropzone = document.getElementById('audioDropzone');
+  var fileInput = document.getElementById('audioFileInput');
+  var browseBtn = document.getElementById('audioBrowseBtn');
+  var addMoreBtn = document.getElementById('audioAddMoreBtn');
+  var clearBtn = document.getElementById('audioClearBtn');
+  var fileList = document.getElementById('audioFileList');
+  var emptyState = document.getElementById('audioEmptyState');
+  var countLabel = document.getElementById('audioFileCountLabel');
+  var convertAllBtn = document.getElementById('audioConvertAllBtn');
+  var convertBottomBtn = document.getElementById('audioConvertBottomBtn');
+  var downloadAllBtn = document.getElementById('audioDownloadAllBtn');
+  var bitrateSel = document.getElementById('bitrate');
+  var channelsSel = document.getElementById('channelsMode');
+  var rateSel = document.getElementById('sampleRateMode');
+  var statsLine = document.getElementById('audioStatsLine');
+  var toast = document.getElementById('toast');
+
+  var items = []; // {id, file, name, size, duration, buffer, status, blob, outName, outSize, progress}
+  var uid = 1;
+  var audioCtx = null;
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+  }
+  function fmtBytes(b){
+    if(!b && b!==0) return '—';
+    if(b===0) return '0 B';
+    var k=1024, sizes=['B','KB','MB','GB'], i=Math.floor(Math.log(b)/Math.log(k));
+    return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+sizes[i];
+  }
+  function fmtDur(s){
+    if(!s && s!==0) return '';
+    s = Math.round(s);
+    var m = Math.floor(s/60), r = s%60;
+    return m+':'+(r<10?'0':'')+r;
+  }
+  function baseName(name){ return name.replace(/\.[^.]+$/,''); }
+  function extLabel(name){
+    var m = /\.([^.]+)$/.exec(name||'');
+    return m ? m[1].toUpperCase().slice(0,4) : 'AUDIO';
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function isAudioFile(f){
+    if(!f) return false;
+    var n=(f.name||'').toLowerCase();
+    return n.endsWith('.m4a')||n.endsWith('.mp4')||n.endsWith('.aac')||n.endsWith('.wav')||n.endsWith('.ogg')||n.endsWith('.flac')|| (f.type && f.type.indexOf('audio/')===0);
+  }
+  function getCtx(){
+    if(!audioCtx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      audioCtx = new AC();
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  // Lazy-load the LAME MP3 encoder (classic script, tries CDNs in order)
+  var lamePromise = null;
+  function loadLame(){
+    if(window.lamejs && window.lamejs.Mp3Encoder) return Promise.resolve();
+    if(lamePromise) return lamePromise;
+    lamePromise = new Promise(function(resolve, reject){
+      var urls = [
+        'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js',
+        'https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js'
+      ];
+      var i = 0;
+      function tryNext(){
+        if(window.lamejs && window.lamejs.Mp3Encoder) return resolve();
+        if(i >= urls.length) return reject(new Error('MP3 encoder failed to load — check your connection and try again.'));
+        var s = document.createElement('script');
+        s.src = urls[i++];
+        s.onload = function(){ (window.lamejs && window.lamejs.Mp3Encoder) ? resolve() : tryNext(); };
+        s.onerror = tryNext;
+        document.head.appendChild(s);
+      }
+      tryNext();
+    });
+    return lamePromise;
+  }
+
+  function decodeFile(file){
+    var ctx = getCtx();
+    if(!ctx) return Promise.reject(new Error('Web Audio is not supported in this browser.'));
+    return file.arrayBuffer().then(function(buf){
+      return new Promise(function(resolve, reject){
+        var p = ctx.decodeAudioData(buf, resolve, reject);
+        if(p && typeof p.catch === 'function') p.catch(reject);
+      });
+    });
+  }
+
+  function renderBuffer(buffer){
+    var targetRate = rateSel.value === 'orig' ? buffer.sampleRate : parseInt(rateSel.value, 10);
+    var targetCh = channelsSel.value === 'mono' ? 1 : channelsSel.value === 'stereo' ? 2 : buffer.numberOfChannels;
+    targetCh = Math.min(2, Math.max(1, targetCh));
+    if(targetRate === buffer.sampleRate && targetCh === buffer.numberOfChannels) return Promise.resolve(buffer);
+    var len = Math.max(1, Math.ceil(buffer.duration * targetRate));
+    var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    var off = new OAC(targetCh, len, targetRate);
+    var src = off.createBufferSource();
+    src.buffer = buffer;
+    src.connect(off.destination);
+    src.start();
+    return off.startRendering();
+  }
+
+  function floatTo16(data){
+    var out = new Int16Array(data.length);
+    for(var i=0;i<data.length;i++){
+      var s = Math.max(-1, Math.min(1, data[i]));
+      out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return out;
+  }
+
+  function encodeMp3(audioBuffer, bitrate, onprogress){
+    var channels = Math.min(2, audioBuffer.numberOfChannels);
+    var left = floatTo16(audioBuffer.getChannelData(0));
+    var right = channels > 1 ? floatTo16(audioBuffer.getChannelData(1)) : null;
+    var enc = new lamejs.Mp3Encoder(channels, audioBuffer.sampleRate, bitrate);
+    var parts = [];
+    var block = 1152, i = 0, total = left.length;
+    return new Promise(function(resolve){
+      function step(){
+        var end = Math.min(total, i + block * 60);
+        while(i < end){
+          var data = channels > 1
+            ? enc.encodeBuffer(left.subarray(i, i+block), right.subarray(i, i+block))
+            : enc.encodeBuffer(left.subarray(i, i+block));
+          if(data.length) parts.push(new Int8Array(data));
+          i += block;
+        }
+        onprogress(Math.round((i/total)*100));
+        if(i < total){ setTimeout(step, 0); }
+        else {
+          var tail = enc.flush();
+          if(tail.length) parts.push(new Int8Array(tail));
+          resolve(new Blob(parts, {type:'audio/mpeg'}));
+        }
+      }
+      step();
+    });
+  }
+
+  function updateUI(){
+    var total = items.length;
+    var done = items.filter(function(i){return i.status==='done';}).length;
+    var origTotal = items.reduce(function(s,i){return s+i.size;},0);
+    var outTotal = items.reduce(function(s,i){return s+(i.outSize||0);},0);
+
+    countLabel.textContent = total===0 ? '— No files yet' : '— '+total+' file'+(total>1?'s':'')+(done? ' · '+done+' converted':'');
+    convertAllBtn.disabled = total===0;
+    convertBottomBtn.disabled = total===0;
+    downloadAllBtn.disabled = done===0;
+    convertAllBtn.textContent = done===total && total>0 ? 'Convert Again ↻' : 'Convert All →';
+    convertBottomBtn.textContent = done>0 ? 'Convert ('+done+'/'+total+' done)' : 'Convert';
+
+    if(total===0){
+      statsLine.textContent = 'Add files to see total size.';
+    } else if(done===0){
+      statsLine.innerHTML = '<b>'+total+'</b> file'+(total>1?'s':'')+' · <b>'+fmtBytes(origTotal)+'</b> total — hit Convert to create MP3s.';
+    } else {
+      statsLine.innerHTML = '<b>'+done+'/'+total+'</b> converted · '+fmtBytes(origTotal)+' → <b>'+fmtBytes(outTotal)+'</b> MP3';
+    }
+
+    if(total===0){
+      fileList.innerHTML = '';
+      fileList.appendChild(emptyState);
+      emptyState.style.display='block';
+    } else if(emptyState.parentNode){
+      emptyState.style.display='none';
+    }
+  }
+
+  function renderItem(item){
+    var row = document.createElement('div');
+    row.className='file-row';
+    row.id='arow-'+item.id;
+
+    var thumb = document.createElement('div');
+    thumb.className='thumb';
+    thumb.innerHTML = '<span class="ext">'+escapeHtml(extLabel(item.name))+'</span>';
+
+    var main = document.createElement('div'); main.className='file-main';
+    var outName = item.outName || (baseName(item.name)+'.mp3');
+    main.innerHTML =
+      '<div class="file-name" title="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+' <span style="color:var(--muted);font-weight:600">→ '+escapeHtml(outName)+'</span></div>'+
+      '<div class="file-sub"><span>'+fmtBytes(item.size)+'</span>'+(item.duration?'<span>'+fmtDur(item.duration)+'</span>':'<span>reading…</span>')+(item.outSize?'<span style="color:var(--accent);font-weight:700">→ '+fmtBytes(item.outSize)+'</span>':'')+'</div>'+
+      '<div class="progress" style="display:'+(item.status==='working'?'block':'none')+'"><i style="width:'+(item.progress||0)+'%"></i></div>';
+
+    var right = document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end'; right.style.gap='8px';
+    var badge = document.createElement('span');
+    badge.className = 'badge '+(item.status==='done'?'done': item.status==='working'?'work':'wait');
+    badge.textContent = item.status==='done' ? '✓ MP3 ready' : item.status==='working' ? 'Converting…' : 'Waiting';
+    var actions = document.createElement('div'); actions.className='row-actions';
+    if(item.status==='done'){
+      var dl = document.createElement('button'); dl.className='dl-btn'; dl.type='button'; dl.textContent='Download';
+      dl.addEventListener('click', function(){ downloadItem(item); });
+      actions.appendChild(dl);
+      var openBtn = document.createElement('button'); openBtn.className='icon-btn'; openBtn.type='button'; openBtn.title='Open MP3 in a new tab (save it from there if the download is blocked)'; openBtn.textContent='↗';
+      openBtn.addEventListener('click', function(){ openItem(item); });
+      actions.appendChild(openBtn);
+    }
+    var conv = document.createElement('button'); conv.className='icon-btn'; conv.type='button'; conv.title='Convert this file'; conv.textContent='↻';
+    conv.addEventListener('click', function(){ convertItem(item).then(updateUI); });
+    var rm = document.createElement('button'); rm.className='icon-btn'; rm.type='button'; rm.title='Remove'; rm.textContent='×';
+    rm.addEventListener('click', function(){ removeItem(item.id); });
+    actions.appendChild(conv); actions.appendChild(rm);
+    right.appendChild(badge); right.appendChild(actions);
+
+    row.appendChild(thumb); row.appendChild(main); row.appendChild(right);
+    return row;
+  }
+
+  function refreshRow(item){
+    var old = document.getElementById('arow-'+item.id);
+    if(!old) return;
+    old.replaceWith(renderItem(item));
+  }
+
+  function addFiles(list){
+    var files = Array.prototype.slice.call(list||[]);
+    if(!files.length) return;
+    var added=0, skipped=0;
+    files.forEach(function(f){
+      if(!isAudioFile(f)){ skipped++; return; }
+      if(items.length>=50){ skipped++; return; }
+      var item = { id:uid++, file:f, name:f.name||('audio-'+uid+'.m4a'), size:f.size, duration:0, buffer:null, status:'waiting', blob:null, blobUrl:null, outName:baseName(f.name||'audio')+'.mp3', outSize:0, progress:0 };
+      items.push(item);
+      if(items.length===1){ fileList.innerHTML=''; }
+      fileList.appendChild(renderItem(item));
+      decodeFile(f).then(function(buf){
+        item.buffer = buf;
+        item.duration = buf.duration;
+        refreshRow(item); updateUI();
+      }).catch(function(){
+        item.duration = 0;
+        refreshRow(item);
+        showToast('Could not read "'+item.name+'" — this browser may not support decoding it.');
+      });
+      added++;
+    });
+    if(added) showToast(added+' file'+(added>1?'s':'')+' added — ready to convert.');
+    if(skipped) showToast(skipped+' file(s) skipped — only M4A/audio files are supported (max 50).');
+    updateUI();
+  }
+
+  function removeItem(id){
+    var idx = items.findIndex(function(i){return i.id===id;});
+    if(idx>-1){
+      var it = items[idx];
+      if(it.blobUrl) URL.revokeObjectURL(it.blobUrl);
+      items.splice(idx,1);
+      var row = document.getElementById('arow-'+id);
+      if(row) row.remove();
+      if(items.length===0){ fileList.innerHTML=''; fileList.appendChild(emptyState); emptyState.style.display='block'; }
+      updateUI();
+    }
+  }
+
+  function convertItem(item){
+    item.status='working'; item.progress=5; refreshRow(item);
+    return loadLame().then(function(){
+      var getBuffer = item.buffer ? Promise.resolve(item.buffer) : decodeFile(item.file).then(function(buf){ item.buffer=buf; item.duration=buf.duration; return buf; });
+      return getBuffer;
+    }).then(function(buf){
+      item.progress=20; refreshRow(item);
+      return renderBuffer(buf);
+    }).then(function(rendered){
+      var bitrate = parseInt(bitrateSel.value, 10) || 192;
+      return encodeMp3(rendered, bitrate, function(p){
+        item.progress = 20 + Math.round(p*0.8);
+        refreshRow(item);
+      });
+    }).then(function(blob){
+      if(item.blobUrl) URL.revokeObjectURL(item.blobUrl);
+      item.blob = blob;
+      item.blobUrl = URL.createObjectURL(blob);
+      item.outSize = blob.size;
+      item.outName = baseName(item.name)+'.mp3';
+      item.progress = 100;
+      item.status = 'done';
+      refreshRow(item);
+      return item;
+    }).catch(function(err){
+      item.status='waiting'; item.progress=0; refreshRow(item);
+      showToast((err && err.message) ? err.message : ('Could not convert "'+item.name+'".'));
+      return item;
+    });
+  }
+
+  function convertAll(){
+    if(!items.length) return;
+    convertAllBtn.disabled=true; convertBottomBtn.disabled=true;
+    var chain = Promise.resolve();
+    items.forEach(function(item){
+      chain = chain.then(function(){ return convertItem(item); });
+    });
+    chain.then(function(){
+      updateUI();
+      var done = items.filter(function(i){return i.status==='done';}).length;
+      if(done) showToast(done+' MP3'+(done>1?'s':'')+' ready — download individually or as ZIP.');
+    });
+  }
+
+  function triggerDownload(url, name){
+    var a=document.createElement('a');
+    a.href=url; a.download=name; a.rel='noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ a.remove(); }, 150);
+  }
+  function ensureBlobUrl(item){
+    if(!item.blobUrl && item.blob) item.blobUrl = URL.createObjectURL(item.blob);
+    return item.blobUrl;
+  }
+  function openItem(item){
+    var url = ensureBlobUrl(item);
+    if(!url) return;
+    var w = window.open(url, '_blank');
+    if(w){
+      try{ w.opener=null; }catch(e){}
+      showToast('Opened '+item.outName+' — use your browser\'s Save or Share to keep it.');
+    } else {
+      showToast('Pop-up blocked — allow pop-ups for this page, or try Download again.');
+    }
+  }
+  function downloadItem(item){
+    if(!item.blob) return;
+    triggerDownload(ensureBlobUrl(item), item.outName);
+    showToast('Downloading '+item.outName+' — if nothing appears, tap ↗ to open it and save from the new tab.');
+  }
+
+  function downloadAllZip(){
+    var doneItems = items.filter(function(i){return i.status==='done' && i.blob;});
+    if(!doneItems.length){ showToast('Convert files first, then download the ZIP.'); return; }
+    if(doneItems.length===1){ downloadItem(doneItems[0]); return; }
+    if(typeof JSZip==='undefined'){ showToast('ZIP is still loading — wait a second and try again, or use the Download button on each file.'); return; }
+    downloadAllBtn.disabled=true; downloadAllBtn.textContent='Building ZIP…';
+    var zip = new JSZip();
+    var used = {};
+    doneItems.forEach(function(it){
+      var name = it.outName;
+      if(used[name]){ var b=baseName(name); var n=2; while(used[b+'-'+n+'.mp3']) n++; name=b+'-'+n+'.mp3'; }
+      used[name]=true;
+      zip.file(name, it.blob);
+    });
+    zip.generateAsync({type:'blob'}).then(function(blob){
+      var url = URL.createObjectURL(blob);
+      triggerDownload(url, 'mp3-audio.zip');
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      downloadAllBtn.disabled=false; downloadAllBtn.textContent='Download All (.zip)';
+      showToast('Downloading mp3-audio.zip with '+doneItems.length+' MP3s.');
+    }).catch(function(){
+      downloadAllBtn.disabled=false; downloadAllBtn.textContent='Download All (.zip)';
+      showToast('ZIP failed — use the Download button on each file instead.');
+    });
+  }
+
+  // Events
+  browseBtn.addEventListener('click', function(){ fileInput.click(); });
+  addMoreBtn.addEventListener('click', function(){ fileInput.click(); });
+  dropzone.addEventListener('click', function(e){ if(e.target===dropzone || e.target.closest('.drop-icon')) fileInput.click(); });
+  dropzone.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }});
+  fileInput.addEventListener('change', function(){ addFiles(fileInput.files); fileInput.value=''; });
+
+  ['dragenter','dragover'].forEach(function(ev){ dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(ev){ dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.remove('drag'); }); });
+  dropzone.addEventListener('drop', function(e){ addFiles(e.dataTransfer.files); });
+
+  convertAllBtn.addEventListener('click', convertAll);
+  convertBottomBtn.addEventListener('click', convertAll);
+  downloadAllBtn.addEventListener('click', downloadAllZip);
+  clearBtn.addEventListener('click', function(){
+    items.forEach(function(it){ if(it.blobUrl) URL.revokeObjectURL(it.blobUrl); });
+    items=[]; fileList.innerHTML=''; fileList.appendChild(emptyState); emptyState.style.display='block'; updateUI(); showToast('Cleared all files.');
+  });
+
+  updateUI();
+})();
+</script>
+<script>
+(function(){
+  // ---------- AI Video Watermark Remover ----------
+  var dropzone = document.getElementById('videoDropzone');
+  var fileInput = document.getElementById('videoFileInput');
+  var browseBtn = document.getElementById('videoBrowseBtn');
+  var changeBtn = document.getElementById('videoChangeBtn');
+  var clearVideoBtn = document.getElementById('videoClearBtn');
+  var stageWrap = document.getElementById('videoStageWrap');
+  var stage = document.getElementById('videoStage');
+  var video = document.getElementById('wmVideo');
+  var box = document.getElementById('wmBox');
+  var handle = document.getElementById('wmHandle');
+  var playBtn = document.getElementById('wmPlayBtn');
+  var seek = document.getElementById('wmSeek');
+  var timeLabel = document.getElementById('wmTime');
+  var fileLabel = document.getElementById('videoFileLabel');
+  var statsLine = document.getElementById('videoStatsLine');
+  var methodSel = document.getElementById('wmMethod');
+  var qualitySel = document.getElementById('wmQuality');
+  var audioSel = document.getElementById('wmAudio');
+  var processBtn = document.getElementById('wmProcessBtn');
+  var procWrap = document.getElementById('videoProcWrap');
+  var procLabel = document.getElementById('videoProcLabel');
+  var procBar = document.getElementById('videoProcBar');
+  var cancelBtn = document.getElementById('wmCancelBtn');
+  var resultWrap = document.getElementById('videoResultWrap');
+  var resultVideo = document.getElementById('wmResult');
+  var resultMeta = document.getElementById('videoResultMeta');
+  var downloadBtn = document.getElementById('wmDownloadBtn');
+  var openBtn = document.getElementById('wmOpenBtn');
+  var toast = document.getElementById('toast');
+
+  var regX = document.getElementById('regX'), regY = document.getElementById('regY'),
+      regW = document.getElementById('regW'), regH = document.getElementById('regH');
+  var regXOut = document.getElementById('regXOut'), regYOut = document.getElementById('regYOut'),
+      regWOut = document.getElementById('regWOut'), regHOut = document.getElementById('regHOut');
+
+  var region = { x:68, y:74, w:26, h:16 }; // percent of frame
+  var currentFile = null;
+  var fileUrl = null;
+  var resultBlob = null;
+  var resultUrl = null;
+  var resultName = 'cleaned-video.webm';
+  var processing = false;
+  var cancelled = false;
+  var recorder = null;
+  var audioCtx = null, mediaSrc = null, audioDest = null;
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function(){ toast.classList.remove('show'); }, 2800);
+  }
+  function fmtBytes(b){
+    if(!b && b!==0) return '—';
+    if(b===0) return '0 B';
+    var k=1024, sizes=['B','KB','MB','GB'], i=Math.floor(Math.log(b)/Math.log(k));
+    return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+sizes[i];
+  }
+  function fmtTime(s){
+    if(!isFinite(s) || s < 0) s = 0;
+    s = Math.floor(s);
+    var m = Math.floor(s/60), r = s%60;
+    return m+':'+(r<10?'0':'')+r;
+  }
+  function baseName(name){ return name.replace(/\.[^.]+$/,''); }
+  function clampRegion(){
+    region.w = Math.min(100, Math.max(2, region.w));
+    region.h = Math.min(100, Math.max(2, region.h));
+    region.x = Math.min(100 - region.w, Math.max(0, region.x));
+    region.y = Math.min(100 - region.h, Math.max(0, region.y));
+  }
+  function renderBox(){
+    clampRegion();
+    box.style.left = region.x+'%';
+    box.style.top = region.y+'%';
+    box.style.width = region.w+'%';
+    box.style.height = region.h+'%';
+    regX.value = region.x; regY.value = region.y; regW.value = region.w; regH.value = region.h;
+    regXOut.textContent = Math.round(region.x)+'%';
+    regYOut.textContent = Math.round(region.y)+'%';
+    regWOut.textContent = Math.round(region.w)+'%';
+    regHOut.textContent = Math.round(region.h)+'%';
+  }
+  [ [regX,'x'], [regY,'y'], [regW,'w'], [regH,'h'] ].forEach(function(pair){
+    pair[0].addEventListener('input', function(){
+      region[pair[1]] = parseFloat(pair[0].value) || 0;
+      renderBox();
+    });
+  });
+  document.querySelectorAll('[data-preset]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var p = btn.getAttribute('data-preset');
+      var w = 26, h = 16, m = 3;
+      if(p==='tl'){ region.x=m; region.y=m; }
+      if(p==='tr'){ region.x=100-w-m; region.y=m; }
+      if(p==='bl'){ region.x=m; region.y=100-h-m; }
+      if(p==='br'){ region.x=100-w-m; region.y=100-h-m; }
+      if(p==='center'){ region.x=(100-w)/2; region.y=(100-h)/2; }
+      region.w=w; region.h=h;
+      renderBox();
+    });
+  });
+
+  // Drag / resize the box (pointer events, works with touch)
+  var drag = null;
+  function stageRect(){ return stage.getBoundingClientRect(); }
+  box.addEventListener('pointerdown', function(e){
+    if(processing) return;
+    e.preventDefault();
+    var r = stageRect();
+    drag = {
+      mode: (e.target === handle) ? 'resize' : 'move',
+      startX: e.clientX, startY: e.clientY,
+      rectW: r.width, rectH: r.height,
+      orig: { x:region.x, y:region.y, w:region.w, h:region.h }
+    };
+    box.setPointerCapture(e.pointerId);
+  });
+  box.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    var dx = (e.clientX - drag.startX) / drag.rectW * 100;
+    var dy = (e.clientY - drag.startY) / drag.rectH * 100;
+    if(drag.mode === 'move'){
+      region.x = drag.orig.x + dx;
+      region.y = drag.orig.y + dy;
+    } else {
+      region.w = drag.orig.w + dx;
+      region.h = drag.orig.h + dy;
+    }
+    renderBox();
+  });
+  function endDrag(){ drag = null; }
+  box.addEventListener('pointerup', endDrag);
+  box.addEventListener('pointercancel', endDrag);
+
+  // ----- file loading -----
+  function isVideoFile(f){
+    if(!f) return false;
+    if(f.type && f.type.indexOf('video/')===0) return true;
+    var n=(f.name||'').toLowerCase();
+    return n.endsWith('.mp4')||n.endsWith('.webm')||n.endsWith('.mov')||n.endsWith('.m4v');
+  }
+  function loadVideo(file){
+    if(processing) return;
+    if(!isVideoFile(file)){ showToast('That does not look like a video file — try an MP4, WebM or MOV.'); return; }
+    clearResult();
+    currentFile = file;
+    if(fileUrl) URL.revokeObjectURL(fileUrl);
+    fileUrl = URL.createObjectURL(file);
+    video.src = fileUrl;
+    stageWrap.classList.remove('hidden');
+    fileLabel.textContent = '— ' + file.name + ' · ' + fmtBytes(file.size);
+    processBtn.disabled = false;
+    try{ video.currentTime = 0.1; }catch(e){}
+    showToast('Video loaded — scrub to the watermark and drag the box over it.');
+  }
+  function clearVideo(){
+    if(processing) return;
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    if(fileUrl) URL.revokeObjectURL(fileUrl);
+    fileUrl = null;
+    currentFile = null;
+    clearResult();
+    stageWrap.classList.add('hidden');
+    processBtn.disabled = true;
+    timeLabel.textContent = '0:00 / 0:00';
+    statsLine.textContent = 'Add a video to get started — removal runs locally, nothing is uploaded.';
+  }
+  function clearResult(){
+    if(resultUrl) URL.revokeObjectURL(resultUrl);
+    resultUrl = null;
+    resultBlob = null;
+    resultVideo.removeAttribute('src');
+    resultWrap.classList.remove('on');
+  }
+
+  video.addEventListener('loadedmetadata', function(){
+    var d = video.duration;
+    timeLabel.textContent = fmtTime(video.currentTime) + ' / ' + fmtTime(d);
+    statsLine.innerHTML = '<b>'+video.videoWidth+'×'+video.videoHeight+'</b> · <b>'+fmtTime(d)+'</b> long · drag the dashed box over the watermark, then hit <b>Remove Watermark</b>.';
+    renderBox();
+  });
+  video.addEventListener('timeupdate', function(){
+    if(isFinite(video.duration) && video.duration > 0){
+      seek.value = (video.currentTime / video.duration) * 100;
+    }
+    timeLabel.textContent = fmtTime(video.currentTime) + ' / ' + fmtTime(video.duration);
+  });
+  video.addEventListener('play', function(){ playBtn.textContent = '❚❚'; });
+  video.addEventListener('pause', function(){ playBtn.textContent = '▶'; });
+  video.addEventListener('error', function(){
+    if(currentFile) showToast('This video could not be played by your browser — try an MP4 (H.264) version.');
+  });
+  playBtn.addEventListener('click', function(){
+    if(video.paused) video.play(); else video.pause();
+  });
+  seek.addEventListener('input', function(){
+    if(isFinite(video.duration) && video.duration > 0){
+      video.currentTime = (parseFloat(seek.value)/100) * video.duration;
+    }
+  });
+
+  // ----- removal processing -----
+  function pickMime(){
+    var candidates = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
+    if(typeof MediaRecorder === 'undefined') return '';
+    for(var i=0;i<candidates.length;i++){
+      try{ if(MediaRecorder.isTypeSupported(candidates[i])) return candidates[i]; }catch(e){}
+    }
+    return '';
+  }
+  function ensureAudioGraph(){
+    if(mediaSrc) return true;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return false;
+    try{
+      audioCtx = new AC();
+      mediaSrc = audioCtx.createMediaElementSource(video);
+      audioDest = audioCtx.createMediaStreamDestination();
+      mediaSrc.connect(audioDest);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  var snap = document.createElement('canvas');
+  var out = document.createElement('canvas');
+  var tmp = document.createElement('canvas');
+
+  function drawCleanFrame(W, H){
+    var sctx = snap.getContext('2d');
+    sctx.drawImage(video, 0, 0, W, H);
+    var ctx = out.getContext('2d');
+    ctx.drawImage(snap, 0, 0);
+    var rx = region.x/100*W, ry = region.y/100*H, rw = region.w/100*W, rh = region.h/100*H;
+    if(rw < 2 || rh < 2) return;
+    if(methodSel.value === 'blur'){
+      var b = Math.max(10, Math.round(rw * 0.09));
+      ctx.save();
+      ctx.beginPath(); ctx.rect(rx, ry, rw, rh); ctx.clip();
+      try{ ctx.filter = 'blur('+b+'px)'; }catch(e){}
+      ctx.drawImage(snap, 0, 0);
+      ctx.restore();
+      try{ ctx.filter = 'none'; }catch(e){}
+      return;
+    }
+    // Smart fill: stretch the 2px edge strips inward and blend them together
+    var canH = rx >= 2 && (rx + rw) <= W - 2;
+    var canV = ry >= 2 && (ry + rh) <= H - 2;
+    if(canH){
+      ctx.drawImage(snap, rx-2, ry, 2, rh, rx, ry, rw, rh);
+      tmp.width = Math.max(1, Math.round(rw)); tmp.height = Math.max(1, Math.round(rh));
+      var t = tmp.getContext('2d');
+      t.clearRect(0, 0, tmp.width, tmp.height);
+      t.drawImage(snap, rx+rw, ry, 2, rh, 0, 0, tmp.width, tmp.height);
+      var g = t.createLinearGradient(0, 0, tmp.width, 0);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,1)');
+      t.globalCompositeOperation = 'destination-in';
+      t.fillStyle = g; t.fillRect(0, 0, tmp.width, tmp.height);
+      t.globalCompositeOperation = 'source-over';
+      ctx.drawImage(tmp, rx, ry);
+    } else if(canV){
+      ctx.drawImage(snap, rx, ry-2, rw, 2, rx, ry, rw, rh);
+      tmp.width = Math.max(1, Math.round(rw)); tmp.height = Math.max(1, Math.round(rh));
+      var t2 = tmp.getContext('2d');
+      t2.clearRect(0, 0, tmp.width, tmp.height);
+      t2.drawImage(snap, rx, ry+rh, rw, 2, 0, 0, tmp.width, tmp.height);
+      var g2 = t2.createLinearGradient(0, 0, 0, tmp.height);
+      g2.addColorStop(0, 'rgba(0,0,0,0)');
+      g2.addColorStop(1, 'rgba(0,0,0,1)');
+      t2.globalCompositeOperation = 'destination-in';
+      t2.fillStyle = g2; t2.fillRect(0, 0, tmp.width, tmp.height);
+      t2.globalCompositeOperation = 'source-over';
+      ctx.drawImage(tmp, rx, ry);
+    } else {
+      // Box covers the whole frame width and height — fall back to blur
+      var b2 = Math.max(10, Math.round(rw * 0.09));
+      ctx.save();
+      ctx.beginPath(); ctx.rect(rx, ry, rw, rh); ctx.clip();
+      try{ ctx.filter = 'blur('+b2+'px)'; }catch(e){}
+      ctx.drawImage(snap, 0, 0);
+      ctx.restore();
+      try{ ctx.filter = 'none'; }catch(e){}
+    }
+  }
+
+  function setProcessingUI(on){
+    procWrap.classList.toggle('on', on);
+    processBtn.disabled = on || !currentFile;
+    browseBtn.disabled = on;
+    changeBtn.disabled = on;
+    clearVideoBtn.disabled = on;
+    box.style.pointerEvents = on ? 'none' : 'auto';
+    box.style.opacity = on ? '0.35' : '1';
+  }
+
+  function startProcess(){
+    if(!currentFile || processing) return;
+    if(typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream){
+      showToast('Video recording is not supported in this browser — try Chrome or Edge on desktop.');
+      return;
+    }
+    var vw = video.videoWidth, vh = video.videoHeight;
+    if(!vw || !vh){ showToast('The video is still loading — give it a second and try again.'); return; }
+    var scale = Math.min(1, 1280 / vw);
+    var W = Math.max(2, Math.round(vw * scale / 2) * 2);
+    var H = Math.max(2, Math.round(vh * scale / 2) * 2);
+    snap.width = W; snap.height = H;
+    out.width = W; out.height = H;
+    clearResult();
+
+    var wantAudio = audioSel.value === 'keep';
+    var hasAudioGraph = wantAudio && ensureAudioGraph();
+    if(hasAudioGraph && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+    var stream = out.captureStream(30);
+    if(hasAudioGraph && audioDest){
+      try{
+        audioDest.stream.getAudioTracks().forEach(function(t){ stream.addTrack(t); });
+      }catch(e){}
+    }
+    var mime = pickMime();
+    var opts = { videoBitsPerSecond: parseInt(qualitySel.value, 10) || 8000000 };
+    if(mime) opts.mimeType = mime;
+    var chunks = [];
+    try{
+      recorder = new MediaRecorder(stream, opts);
+    }catch(e){
+      try{ recorder = new MediaRecorder(stream); }
+      catch(e2){ showToast('Could not start the recorder in this browser.'); return; }
+    }
+    recorder.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+    recorder.onstop = function(){
+      processing = false;
+      setProcessingUI(false);
+      video.pause();
+      if(cancelled){
+        showToast('Removal cancelled — no file was created.');
+        return;
+      }
+      var type = (recorder && recorder.mimeType) || mime || 'video/webm';
+      resultBlob = new Blob(chunks, { type: type });
+      var ext = type.indexOf('mp4') > -1 ? 'mp4' : 'webm';
+      resultName = baseName(currentFile.name) + '-clean.' + ext;
+      resultUrl = URL.createObjectURL(resultBlob);
+      resultVideo.src = resultUrl;
+      resultMeta.textContent = '— ' + resultName + ' · ' + fmtBytes(resultBlob.size) + ' · ' + W + '×' + H;
+      resultWrap.classList.add('on');
+      showToast('Done — your cleaned video is ready to download.');
+      resultWrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    };
+
+    cancelled = false;
+    processing = true;
+    setProcessingUI(true);
+    procBar.style.width = '0%';
+    procLabel.textContent = 'Removing watermark… 0% — keep this tab open';
+
+    video.pause();
+    var begin = function(){
+      video.removeEventListener('seeked', begin);
+      drawCleanFrame(W, H);
+      recorder.start(250);
+      var p = video.play();
+      if(p && p.catch) p.catch(function(){});
+      var loop = function(){
+        if(!processing) return;
+        drawCleanFrame(W, H);
+        var d = video.duration;
+        if(isFinite(d) && d > 0){
+          var pct = Math.min(100, Math.round((video.currentTime / d) * 100));
+          procBar.style.width = pct + '%';
+          procLabel.textContent = 'Removing watermark… ' + pct + '% — keep this tab open';
+        } else {
+          procLabel.textContent = 'Removing watermark… ' + fmtTime(video.currentTime) + ' processed — keep this tab open';
+        }
+        if(video.ended || (isFinite(d) && d > 0 && video.currentTime >= d - 0.08)){
+          if(recorder && recorder.state !== 'inactive') recorder.stop();
+          return;
+        }
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    };
+    if(video.currentTime > 0.05 && !video.ended){
+      video.addEventListener('seeked', begin);
+      try{ video.currentTime = 0; }catch(e){ begin(); }
+    } else {
+      begin();
+    }
+  }
+
+  function cancelProcess(){
+    if(!processing) return;
+    cancelled = true;
+    processing = false;
+    video.pause();
+    if(recorder && recorder.state !== 'inactive'){
+      try{ recorder.stop(); }catch(e){ setProcessingUI(false); }
+    } else {
+      setProcessingUI(false);
+    }
+  }
+
+  processBtn.addEventListener('click', startProcess);
+  cancelBtn.addEventListener('click', cancelProcess);
+
+  downloadBtn.addEventListener('click', function(){
+    if(!resultBlob || !resultUrl) return;
+    var a = document.createElement('a');
+    a.href = resultUrl;
+    a.download = resultName;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ a.remove(); }, 150);
+    showToast('Downloading ' + resultName + ' — if nothing appears, use "Open in new tab" and save it from there.');
+  });
+  openBtn.addEventListener('click', function(){
+    if(!resultUrl) return;
+    var w = window.open(resultUrl, '_blank');
+    if(w){ try{ w.opener = null; }catch(e){} showToast('Opened the cleaned video — use your browser\'s Save or Share to keep it.'); }
+    else showToast('Pop-up blocked — allow pop-ups for this page, or try Download again.');
+  });
+
+  // Events
+  browseBtn.addEventListener('click', function(){ fileInput.click(); });
+  changeBtn.addEventListener('click', function(){ fileInput.click(); });
+  clearVideoBtn.addEventListener('click', function(){ clearVideo(); showToast('Video removed.'); });
+  dropzone.addEventListener('click', function(e){ if(e.target === dropzone || e.target.closest('.drop-icon')) fileInput.click(); });
+  dropzone.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }});
+  fileInput.addEventListener('change', function(){
+    if(fileInput.files && fileInput.files[0]) loadVideo(fileInput.files[0]);
+    fileInput.value = '';
+  });
+  ['dragenter','dragover'].forEach(function(ev){ dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(ev){ dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.remove('drag'); }); });
+  dropzone.addEventListener('drop', function(e){
+    var files = e.dataTransfer.files;
+    if(files && files.length) loadVideo(files[0]);
+  });
+
+  renderBox();
 })();
 </script>
 </body>
