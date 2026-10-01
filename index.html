@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="light dark"/>
+<link rel="icon" href="data:,"/>
+<title>JFIF to JPG Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#F7F7F2; --surface:#FFFFFF; --surface-2:#F1F0E9; --line:#E6E3D8; --line-strong:#D9D5C7;
+    --text:#161A18; --muted:#6B7280; --muted2:#9AA0A6;
+    --accent:#0E7A6B; --accent-dark:#0A5E52; --accent-light:#E6F4F1;
+    --amber:#D97706; --amber-bg:#FFFBEB;
+    --radius:18px; --radius-sm:12px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#111413; --surface:#191D1B; --surface-2:#1E2320; --line:#2A2F2C; --line-strong:#343A36;
+      --text:#EDEDEA; --muted:#9AA39E; --muted2:#6B736E;
+      --accent:#2EB8A1; --accent-dark:#25A18B; --accent-light:#12332D;
+      --amber-bg:#2A1F0A; --shadow:0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 20px 56px}
+  /* top nav */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:6px 0 22px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{width:40px;height:40px;border-radius:11px;background:var(--text);color:var(--bg);display:grid;place-items:center;font-weight:800;font-size:13px;letter-spacing:-.02em}
+  .brand-mark span{color:var(--accent);margin-left:1px}
+  @media(prefers-color-scheme:dark){.brand-mark{background:#EDEDEA;color:#111}}
+  .brand-text{line-height:1}
+  .brand-text strong{font-size:15px;letter-spacing:-.02em;display:block}
+  .brand-text small{font-size:12px;color:var(--muted);font-weight:500}
+  .top-links{display:flex;gap:8px;align-items:center}
+  .pill{font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
+  .pill.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+  @media(prefers-color-scheme:dark){.pill.active{background:#EDEDEA;color:#111;border-color:#EDEDEA}}
+  /* hero */
+  .hero{text-align:center;padding:18px 0 8px}
+  .hero h1{font-size:clamp(36px,6vw,58px);line-height:.95;letter-spacing:-.04em;margin:0;font-weight:800}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero p{margin:14px auto 0;max-width:560px;color:var(--muted);font-size:16.5px;line-height:1.6;font-weight:500}
+  .hero-meta{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px}
+  .hero-meta span{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+  /* converter card */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);margin-top:26px;overflow:hidden}
+  .dropzone{margin:18px;border:1.8px dashed var(--line-strong);border-radius:16px;background:var(--surface-2);padding:38px 20px 30px;text-align:center;transition:.15s;position:relative}
+  .dropzone.drag{border-color:var(--accent);background:var(--accent-light)}
+  .drop-icon{width:56px;height:56px;margin:0 auto 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:24px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .dropzone h2{margin:0;font-size:19px;letter-spacing:-.02em}
+  .dropzone p{margin:6px 0 0;color:var(--muted);font-size:13.5px;line-height:1.5}
+  .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .btn{border:0;border-radius:999px;padding:11px 20px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+  .btn-primary{background:var(--accent);color:white}
+  .btn-primary:hover{background:var(--accent-dark)}
+  .btn-secondary{background:var(--surface);border:1px solid var(--line-strong);color:var(--text)}
+  .btn-secondary:hover{border-color:var(--text)}
+  .btn-dark{background:var(--text);color:var(--bg)}
+  @media(prefers-color-scheme:dark){.btn-dark{background:#EDEDEA;color:#111}}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .format-line{margin-top:14px;font-size:12px;color:var(--muted2);font-weight:500;letter-spacing:.01em}
+  .format-line b{color:var(--muted);font-weight:700;background:var(--surface);border:1px solid var(--line);padding:2px 7px;border-radius:999px;margin:0 2px;font-size:11px}
+  /* options */
+  .options{border-top:1px solid var(--line);padding:16px 18px;display:grid;grid-template-columns:1.3fr .8fr .8fr auto;gap:16px;align-items:end;background:var(--surface)}
+  @media(max-width:760px){.options{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.options{grid-template-columns:1fr}}
+  .field label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+  .field label output{font-family:"IBM Plex Mono",monospace;text-transform:none;letter-spacing:0;color:var(--text);font-size:12px}
+  input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+  .select,.num{width:100%;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:0 10px;font-size:13.5px;font-weight:600;color:var(--text);outline:none}
+  .select:focus,.num:focus{border-color:var(--accent)}
+  .quality-presets{display:flex;gap:6px;margin-top:6px}
+  .qp{font-size:11px;font-weight:700;padding:5px 9px;border-radius:999px;border:1px solid var(--line);background:white;color:var(--muted)}
+  @media(prefers-color-scheme:dark){.qp{background:var(--surface-2)}}
+  .qp.active{background:var(--accent-light);color:var(--accent);border-color:transparent}
+  /* file list */
+  .file-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .file-head strong{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .file-head span{color:var(--muted);font-size:12.5px;font-weight:600}
+  .head-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .small-btn{font-size:12.5px;font-weight:700;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+  .small-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .list{border-top:1px solid var(--line)}
+  .empty{padding:28px 18px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6}
+  .file-row{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .file-row:last-child{border-bottom:0}
+  .thumb{width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .ext{font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--muted)}
+  .file-main{min-width:0}
+  .file-name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+  .file-sub{font-size:12px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace}
+  .badge{font-size:11px;font-weight:700;padding:5px 9px;border-radius:999px;white-space:nowrap}
+  .badge.wait{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+  .badge.done{background:var(--accent-light);color:var(--accent)}
+  .badge.work{background:var(--amber-bg);color:var(--amber)}
+  .row-actions{display:flex;gap:6px;align-items:center}
+  .icon-btn{width:32px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:14px}
+  .dl-btn{height:32px;padding:0 13px;border-radius:999px;background:var(--text);color:var(--bg);border:0;font-size:12.5px;font-weight:700}
+  @media(prefers-color-scheme:dark){.dl-btn{background:#EDEDEA;color:#111}}
+  .progress{height:3px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-top:8px}
+  .progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+  /* bottom bar */
+  .bottombar{padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;border-top:1px solid var(--line);background:var(--surface-2)}
+  .stats{font-size:12.5px;color:var(--muted);font-weight:600}
+  .stats b{color:var(--text)}
+  /* info sections */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  .info-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
+  .info-card h3{margin:0 0 8px;font-size:15px;letter-spacing:-.01em}
+  .info-card p, .info-card li{font-size:13.5px;line-height:1.65;color:var(--muted)}
+  .info-card ul{margin:8px 0 0;padding-left:18px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+  @media(max-width:700px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .step-num{width:28px;height:28px;border-radius:50%;background:var(--text);color:var(--bg);display:grid;place-items:center;font-size:12px;font-weight:800;margin-bottom:10px}
+  @media(prefers-color-scheme:dark){.step-num{background:#EDEDEA;color:#111}}
+  .step h4{margin:0;font-size:13.5px}
+  .step p{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--muted)}
+  .faq{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .faq-item{border-bottom:1px solid var(--line)}
+  .faq-item:last-child{border-bottom:0}
+  .faq-q{width:100%;text-align:left;background:none;border:0;padding:16px 18px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;gap:12px;color:var(--text)}
+  .faq-a{padding:0 18px 16px;font-size:13.5px;line-height:1.65;color:var(--muted);display:none}
+  .faq-item.open .faq-a{display:block}
+  .faq-item.open .chev{transform:rotate(180deg)}
+  .chev{transition:.15s;color:var(--muted)}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:11px 16px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.18);max-width:calc(100vw - 32px);text-align:center}
+  @media(prefers-color-scheme:dark){.toast{background:#EDEDEA;color:#111}}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden-input{display:none}
+  .compare{display:flex;gap:8px;align-items:center;font-size:11px;font-weight:700}
+  .compare .from{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;padding:4px 7px;border-radius:999px}
+  .compare .to{background:var(--accent-light);color:var(--accent);padding:4px 7px;border-radius:999px}
+  @media(prefers-color-scheme:dark){.compare .from{background:#2A1212;color:#FCA5A5;border-color:#451A1A}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">JF<span>›</span>JP</div>
+      <div class="brand-text"><strong>JFIF to JPG</strong><small>Free online converter</small></div>
+    </div>
+    <nav class="top-links" aria-label="Converters">
+      <span class="pill active">JFIF → JPG</span>
+      <span class="pill">Batch</span>
+      <span class="pill">No upload</span>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Convert <em>JFIF</em> to JPG<br>in seconds.</h1>
+    <p>Drop your .jfif files below and get standard .jpg images instantly. Everything runs in your browser — your files never leave this device.</p>
+    <div class="hero-meta">
+      <span><i class="dot"></i> 100% free</span>
+      <span><i class="dot"></i> No sign-up</span>
+      <span><i class="dot"></i> Batch conversion</span>
+      <span><i class="dot"></i> Private by design</span>
+    </div>
+  </section>
+
+  <main class="card" id="converter">
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drop JFIF files here or click to browse">
+      <div class="drop-icon">⇪</div>
+      <h2>Drag &amp; drop JFIF files here</h2>
+      <p>or choose files from your computer. You can add multiple files<br class="hide-mobile"> and convert them all at once.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="browseBtn" type="button">Select Files</button>
+        <button class="btn btn-secondary" id="pasteBtn" type="button">Paste from clipboard</button>
+      </div>
+      <div class="format-line">Supports <b>.JFIF</b> <b>.PJIF</b> <b>.JPG</b> <b>.JPEG</b> — max 200 files at once</div>
+      <input class="hidden-input" id="fileInput" type="file" accept=".jfif,.p jfif,.jpg,.jpeg,.jfif,image/jpeg,image/jfif" multiple>
+    </div>
+
+    <div class="options" aria-label="Conversion options">
+      <div class="field">
+        <label>JPG Quality <output id="qualityOut">92%</output></label>
+        <input type="range" id="quality" min="10" max="100" value="92" step="1">
+        <div class="quality-presets">
+          <button class="qp" data-q="65" type="button">Small · 65%</button>
+          <button class="qp active" data-q="92" type="button">Balanced · 92%</button>
+          <button class="qp" data-q="100" type="button">Best · 100%</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Resize</label>
+        <select id="resizeMode" class="select">
+          <option value="original">Original size</option>
+          <option value="1920">Max width 1920px</option>
+          <option value="1280">Max width 1280px</option>
+          <option value="800">Max width 800px</option>
+          <option value="custom">Custom width…</option>
+        </select>
+      </div>
+      <div class="field" id="customWidthWrap" style="display:none">
+        <label>Custom width (px)</label>
+        <input id="customWidth" class="num" type="number" min="16" max="8000" placeholder="e.g. 1200">
+      </div>
+      <div class="field" id="bgWrap">
+        <label>Options</label>
+        <select id="extraOpt" class="select">
+          <option value="keep">Keep as is</option>
+          <option value="strip">Strip metadata</option>
+        </select>
+      </div>
+      <button class="btn btn-dark" id="convertAllBtn" type="button" disabled style="height:42px;padding:0 22px;white-space:nowrap">Convert All →</button>
+    </div>
+
+    <div class="file-head">
+      <div><strong>Your files</strong> <span id="fileCountLabel">— No files yet</span></div>
+      <div class="head-actions">
+        <button class="small-btn" id="addMoreBtn" type="button">+ Add more</button>
+        <button class="small-btn" id="clearBtn" type="button">Clear all</button>
+      </div>
+    </div>
+
+    <div class="list" id="fileList">
+      <div class="empty" id="emptyState">
+        <div style="font-size:22px;margin-bottom:6px">🖼️</div>
+        No files added yet.<br>Drop JFIF images above to get started — conversion happens locally, nothing is uploaded.
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <div class="stats" id="statsLine">Add files to see total size and savings.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" id="downloadAllBtn" type="button" disabled style="padding:10px 16px">Download All (.zip)</button>
+        <button class="btn btn-primary" id="convertBottomBtn" type="button" disabled style="padding:10px 18px">Convert</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><h4>Add your JFIF files</h4><p>Drag &amp; drop, browse, or paste images. You can add a whole folder's worth at once.</p></div>
+    <div class="step"><div class="step-num">2</div><h4>Adjust quality if you like</h4><p>92% is the sweet spot for most photos — near-identical quality, much smaller than 100%.</p></div>
+    <div class="step"><div class="step-num">3</div><h4>Download JPGs</h4><p>Grab files one by one or download everything together as a single ZIP.</p></div>
+  </div>
+
+  <div class="grid2">
+    <article class="info-card">
+      <h3>What is a JFIF file?</h3>
+      <p>JFIF (JPEG File Interchange Format) is the original container format for JPEG images. A <b>.jfif</b> file is already a JPEG inside — Windows and some browsers save JPEGs with the .jfif extension, which many apps and upload forms don't accept.</p>
+      <p style="margin-top:8px">Converting to <b>.jpg</b> re-encodes the image with the standard extension that most websites, editors, and upload forms accept — including Office, Photoshop, and social platforms.</p>
+    </article>
+    <article class="info-card">
+      <h3>JFIF vs JPG — what's the difference?</h3>
+      <ul>
+        <li><b>Image data:</b> Identical JPEG compression in both.</li>
+        <li><b>Extension:</b> .jfif is legacy; .jpg is the standard today.</li>
+        <li><b>Compatibility:</b> JPG is accepted by most editors and CMSs. JFIF often fails uploads.</li>
+        <li><b>This tool:</b> Decodes the JFIF and exports a clean JPG. Re-encoding may cause slight loss — higher settings (92–100%) preserve more detail.</li>
+      </ul>
+    </article>
+  </div>
+
+  <section class="faq" id="faq">
+    <div class="faq-item open">
+      <button class="faq-q" type="button">Is this converter really free? <span class="chev">⌄</span></button>
+      <div class="faq-a">Yes. There is no sign-up, no watermark, and no file-count paywall in this page. Conversion runs entirely in your browser using the Canvas API, so there are no server costs to pass on.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Are my images uploaded anywhere? <span class="chev">⌄</span></button>
+      <div class="faq-a">No. Files are read locally with the File API, drawn to a canvas, and exported as JPG blobs on your device. You can even go offline after the page loads and it will still convert.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Will I lose quality converting JFIF to JPG? <span class="chev">⌄</span></button>
+      <div class="faq-a">Re-encoding to JPG can cause a small amount of generational loss, since JPEG is lossy. At 92–100% that loss is usually imperceptible for photos and preserves the most detail. Lower settings (60–75%) trade a little detail for much smaller files — handy for web use. The original file is never modified.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">Why won't my .jfif file open in some apps? <span class="chev">⌄</span></button>
+      <div class="faq-a">Many upload validators only whitelist .jpg / .jpeg / .png. They reject .jfif even though the bytes are valid JPEG. Renaming sometimes works, but a proper re-encode — like this tool does — guarantees a standard JPG header and metadata layout.</div>
+    </div>
+  </section>
+
+  <p style="text-align:center;color:var(--muted2);font-size:12px;margin-top:22px;line-height:1.6">Files are processed locally in your browser and are never sent to a server.<br>Built for quick, private JFIF → JPG conversion.</p>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  var browseBtn = document.getElementById('browseBtn');
+  var pasteBtn = document.getElementById('pasteBtn');
+  var addMoreBtn = document.getElementById('addMoreBtn');
+  var clearBtn = document.getElementById('clearBtn');
+  var fileList = document.getElementById('fileList');
+  var emptyState = document.getElementById('emptyState');
+  var fileCountLabel = document.getElementById('fileCountLabel');
+  var convertAllBtn = document.getElementById('convertAllBtn');
+  var convertBottomBtn = document.getElementById('convertBottomBtn');
+  var downloadAllBtn = document.getElementById('downloadAllBtn');
+  var quality = document.getElementById('quality');
+  var qualityOut = document.getElementById('qualityOut');
+  var resizeMode = document.getElementById('resizeMode');
+  var customWidthWrap = document.getElementById('customWidthWrap');
+  var customWidth = document.getElementById('customWidth');
+  var statsLine = document.getElementById('statsLine');
+  var toast = document.getElementById('toast');
+  var toastTimer = null;
+
+  var items = []; // {id, file, name, size, url, width, height, status, blob, outName, outSize}
+  var uid = 1;
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+  }
+  function fmtBytes(b){
+    if(!b && b!==0) return '—';
+    if(b===0) return '0 B';
+    var k=1024, sizes=['B','KB','MB','GB'], i=Math.floor(Math.log(b)/Math.log(k));
+    return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+sizes[i];
+  }
+  function baseName(name){
+    return name.replace(/\.[^.]+$/,'');
+  }
+  function isImageFile(f){
+    if(!f) return false;
+    var n=(f.name||'').toLowerCase();
+    return n.endsWith('.jfif')||n.endsWith('.jpg')||n.endsWith('.jpeg')||n.endsWith('.pjif')||n.endsWith('.jpe')|| (f.type && f.type.indexOf('image/')===0);
+  }
+
+  // FAQ
+  document.querySelectorAll('.faq-q').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var item = btn.parentElement;
+      var wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(function(i){ i.classList.remove('open'); });
+      if(!wasOpen) item.classList.add('open');
+    });
+  });
+
+  // Quality presets
+  document.querySelectorAll('.qp').forEach(function(b){
+    b.addEventListener('click', function(){
+      quality.value = b.getAttribute('data-q');
+      syncQuality();
+    });
+  });
+  function syncQuality(){
+    qualityOut.textContent = quality.value+'%';
+    document.querySelectorAll('.qp').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-q')===String(quality.value));
+    });
+    // if already converted, mark stale
+    var hasDone = items.some(function(i){return i.status==='done';});
+    if(hasDone) showToast('Quality changed — convert again to apply to converted files.');
+  }
+  quality.addEventListener('input', syncQuality);
+
+  resizeMode.addEventListener('change', function(){
+    customWidthWrap.style.display = resizeMode.value==='custom' ? 'block' : 'none';
+    if(resizeMode.value!=='custom'){
+      var bw = document.getElementById('bgWrap');
+      if(bw) bw.style.display='block';
+    }
+  });
+
+  function getTargetWidth(origW){
+    var mode = resizeMode.value;
+    if(mode==='original') return origW;
+    if(mode==='custom'){
+      var v = parseInt(customWidth.value,10);
+      if(!v || isNaN(v)) return origW;
+      return Math.min(v, origW);
+    }
+    var max = parseInt(mode,10);
+    return Math.min(max, origW);
+  }
+
+  function updateUI(){
+    var total = items.length;
+    var done = items.filter(function(i){return i.status==='done';}).length;
+    var origTotal = items.reduce(function(s,i){return s+i.size;},0);
+    var outTotal = items.reduce(function(s,i){return s+(i.outSize||0);},0);
+
+    fileCountLabel.textContent = total===0 ? '— No files yet' : '— '+total+' file'+(total>1?'s':'')+(done? ' · '+done+' converted':'');
+    convertAllBtn.disabled = total===0;
+    convertBottomBtn.disabled = total===0;
+    downloadAllBtn.disabled = done===0;
+    convertAllBtn.textContent = done===total && total>0 ? 'Convert Again ↻' : 'Convert All →';
+    convertBottomBtn.textContent = done>0 ? 'Convert ('+done+'/'+total+' done)' : 'Convert';
+
+    if(total===0){
+      statsLine.textContent = 'Add files to see total size and savings.';
+    } else if(done===0){
+      statsLine.innerHTML = '<b>'+total+'</b> file'+(total>1?'s':'')+' · <b>'+fmtBytes(origTotal)+'</b> total — hit Convert to create JPGs.';
+    } else {
+      var diff = origTotal - outTotal;
+      var pct = origTotal ? Math.round((diff/origTotal)*100) : 0;
+      var sign = diff>=0 ? 'saved' : 'larger by';
+      statsLine.innerHTML = '<b>'+done+'/'+total+'</b> converted · '+fmtBytes(origTotal)+' → <b>'+fmtBytes(outTotal)+'</b> ('+Math.abs(pct)+'% '+sign+')';
+    }
+
+    if(total===0){
+      fileList.innerHTML = '';
+      fileList.appendChild(emptyState);
+      emptyState.style.display='block';
+    } else {
+      if(emptyState.parentNode) emptyState.style.display='none';
+      // rebuild if needed - we render incrementally, just ensure empty hidden
+    }
+  }
+
+  function renderItem(item){
+    var row = document.createElement('div');
+    row.className='file-row';
+    row.id='row-'+item.id;
+
+    var thumb = document.createElement('div');
+    thumb.className='thumb';
+    if(item.url){
+      var img=document.createElement('img'); img.src=item.url; img.alt=''; thumb.appendChild(img);
+    } else {
+      thumb.innerHTML='<span class="ext">JFIF</span>';
+    }
+
+    var main=document.createElement('div'); main.className='file-main';
+    var outName = item.outName || (baseName(item.name)+'.jpg');
+    main.innerHTML =
+      '<div class="file-name" title="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+' <span style="color:var(--muted);font-weight:600">→ '+escapeHtml(outName)+'</span></div>'+
+      '<div class="file-sub"><span>'+fmtBytes(item.size)+'</span>'+(item.width?'<span>'+item.width+'×'+item.height+'</span>':'<span>reading…</span>')+(item.outSize?'<span style="color:var(--accent);font-weight:700">→ '+fmtBytes(item.outSize)+'</span>':'')+'</div>'+
+      '<div class="progress" style="display:'+(item.status==='working'?'block':'none')+'"><i style="width:'+(item.progress||0)+'%"></i></div>';
+
+    var right=document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end'; right.style.gap='8px';
+    var badge=document.createElement('span'); badge.className='badge '+(item.status==='done'?'done': item.status==='working'?'work':'wait');
+    badge.textContent = item.status==='done' ? '✓ JPG ready' : item.status==='working' ? 'Converting…' : 'Waiting';
+    var actions=document.createElement('div'); actions.className='row-actions';
+    if(item.status==='done'){
+      var dl=document.createElement('button'); dl.className='dl-btn'; dl.type='button'; dl.textContent='Download';
+      dl.addEventListener('click', function(){ downloadItem(item); });
+      actions.appendChild(dl);
+    }
+    var conv=document.createElement('button'); conv.className='icon-btn'; conv.type='button'; conv.title='Convert this file'; conv.textContent='↻';
+    conv.addEventListener('click', function(){ convertItem(item).then(updateUI); });
+    var rm=document.createElement('button'); rm.className='icon-btn'; rm.type='button'; rm.title='Remove'; rm.textContent='×';
+    rm.addEventListener('click', function(){ removeItem(item.id); });
+    actions.appendChild(conv); actions.appendChild(rm);
+    right.appendChild(badge); right.appendChild(actions);
+
+    row.appendChild(thumb); row.appendChild(main); row.appendChild(right);
+    return row;
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  function refreshRow(item){
+    var old=document.getElementById('row-'+item.id);
+    if(!old) return;
+    var fresh=renderItem(item);
+    old.replaceWith(fresh);
+  }
+
+  function addFiles(fileListInput){
+    var files = Array.prototype.slice.call(fileListInput||[]);
+    if(!files.length) return;
+    var added=0, skipped=0;
+    files.forEach(function(f){
+      if(!isImageFile(f)){ skipped++; return; }
+      if(items.length>=200){ skipped++; return; }
+      var item={ id:uid++, file:f, name:f.name||('pasted-image-'+uid+'.jfif'), size:f.size, url:URL.createObjectURL(f), width:0, height:0, status:'waiting', blob:null, outName:baseName(f.name||'image')+'.jpg', outSize:0, progress:0 };
+      items.push(item);
+      // append row
+      if(items.length===1){ fileList.innerHTML=''; }
+      fileList.appendChild(renderItem(item));
+      // read dimensions
+      var im=new Image();
+      im.onload=function(){ item.width=im.naturalWidth; item.height=im.naturalHeight; refreshRow(item); updateUI(); };
+      im.src=item.url;
+      added++;
+    });
+    if(added) showToast(added+' file'+(added>1?'s':'')+' added — ready to convert.');
+    if(skipped) showToast(skipped+' file(s) skipped — only JFIF/JPG images are supported.');
+    updateUI();
+  }
+
+  function removeItem(id){
+    var idx=items.findIndex(function(i){return i.id===id;});
+    if(idx>-1){
+      var it=items[idx];
+      if(it.url) URL.revokeObjectURL(it.url);
+      if(it.blobUrl) URL.revokeObjectURL(it.blobUrl);
+      items.splice(idx,1);
+      var row=document.getElementById('row-'+id);
+      if(row) row.remove();
+      if(items.length===0){ fileList.innerHTML=''; fileList.appendChild(emptyState); emptyState.style.display='block'; }
+      updateUI();
+    }
+  }
+
+  function loadImageFromFile(file){
+    return new Promise(function(resolve,reject){
+      var url=URL.createObjectURL(file);
+      var img=new Image();
+      img.onload=function(){ resolve({img:img,url:url}); };
+      img.onerror=function(e){ URL.revokeObjectURL(url); reject(e); };
+      img.src=url;
+    });
+  }
+
+  function convertItem(item){
+    item.status='working'; item.progress=15; refreshRow(item);
+    return loadImageFromFile(item.file).then(function(res){
+      var img=res.img;
+      var origW=img.naturalWidth, origH=img.naturalHeight;
+      item.width=origW; item.height=origH;
+      var targetW=getTargetWidth(origW);
+      var scale=targetW/origW;
+      var targetH=Math.round(origH*scale);
+      item.progress=55; refreshRow(item);
+      var canvas=document.createElement('canvas');
+      canvas.width=targetW; canvas.height=targetH;
+      var ctx=canvas.getContext('2d');
+      // JPG has no transparency — fill white
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,targetW,targetH);
+      ctx.drawImage(img,0,0,targetW,targetH);
+      URL.revokeObjectURL(res.url);
+      var q = Math.max(0.1, Math.min(1, parseInt(quality.value,10)/100));
+      return new Promise(function(resolve){
+        canvas.toBlob(function(blob){
+          item.progress=100;
+          if(blob){
+            if(item.blobUrl) URL.revokeObjectURL(item.blobUrl);
+            item.blob=blob;
+            item.blobUrl=URL.createObjectURL(blob);
+            item.outSize=blob.size;
+            item.outName=baseName(item.name)+'.jpg';
+            item.status='done';
+          } else {
+            item.status='waiting';
+          }
+          refreshRow(item);
+          resolve(item);
+        }, 'image/jpeg', q);
+      });
+    }).catch(function(){
+      item.status='waiting'; item.progress=0; refreshRow(item);
+      showToast('Could not read "'+item.name+'". It may be corrupted.');
+      return item;
+    });
+  }
+
+  function convertAll(){
+    if(!items.length) return;
+    convertAllBtn.disabled=true; convertBottomBtn.disabled=true;
+    var chain=Promise.resolve();
+    items.forEach(function(item){
+      chain=chain.then(function(){ return convertItem(item); });
+    });
+    chain.then(function(){
+      updateUI();
+      var done=items.filter(function(i){return i.status==='done';}).length;
+      showToast(done+' JPG'+(done>1?'s':'')+' ready — download individually or as ZIP.');
+    });
+  }
+
+  function downloadItem(item){
+    if(!item.blob) return;
+    var a=document.createElement('a');
+    a.href=item.blobUrl || URL.createObjectURL(item.blob);
+    a.download=item.outName;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function downloadAllZip(){
+    var doneItems=items.filter(function(i){return i.status==='done' && i.blob;});
+    if(!doneItems.length){ showToast('Convert files first, then download the ZIP.'); return; }
+    if(doneItems.length===1){ downloadItem(doneItems[0]); return; }
+    if(typeof JSZip==='undefined'){ showToast('ZIP library still loading — try again in a second, or download files individually.'); doneItems.forEach(function(it,i){ setTimeout(function(){ downloadItem(it); }, i*350); }); return; }
+    downloadAllBtn.disabled=true; downloadAllBtn.textContent='Building ZIP…';
+    var zip=new JSZip();
+    var used={};
+    doneItems.forEach(function(it){
+      var name=it.outName;
+      if(used[name]){ var b=baseName(name); var n=2; while(used[b+'-'+n+'.jpg']) n++; name=b+'-'+n+'.jpg'; }
+      used[name]=true;
+      zip.file(name, it.blob);
+    });
+    zip.generateAsync({type:'blob'}).then(function(blob){
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a'); a.href=url; a.download='jpg-images.zip'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      downloadAllBtn.disabled=false; downloadAllBtn.textContent='Download All (.zip)';
+      showToast('ZIP downloaded with '+doneItems.length+' JPGs.');
+    }).catch(function(){
+      downloadAllBtn.disabled=false; downloadAllBtn.textContent='Download All (.zip)';
+      showToast('ZIP failed — downloading files individually instead.');
+      doneItems.forEach(function(it,i){ setTimeout(function(){ downloadItem(it); }, i*350); });
+    });
+  }
+
+  // Events
+  browseBtn.addEventListener('click', function(){ fileInput.click(); });
+  addMoreBtn.addEventListener('click', function(){ fileInput.click(); });
+  dropzone.addEventListener('click', function(e){ if(e.target===dropzone || e.target.closest('.drop-icon')) fileInput.click(); });
+  dropzone.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }});
+  fileInput.addEventListener('change', function(){ addFiles(fileInput.files); fileInput.value=''; });
+
+  ['dragenter','dragover'].forEach(function(ev){ dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(ev){ dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.remove('drag'); }); });
+  dropzone.addEventListener('drop', function(e){ addFiles(e.dataTransfer.files); });
+
+  window.addEventListener('dragover', function(e){ e.preventDefault(); });
+  window.addEventListener('drop', function(e){ e.preventDefault(); });
+
+  pasteBtn.addEventListener('click', function(){
+    if(!navigator.clipboard || !navigator.clipboard.read){ showToast('Clipboard paste not supported here — try Ctrl+V anywhere on the page.'); return; }
+    navigator.clipboard.read().then(function(clipItems){
+      var promises=[];
+      clipItems.forEach(function(ci){
+        var imgType=ci.types.find(function(t){return t.indexOf('image/')===0;});
+        if(imgType) promises.push(ci.getType(imgType));
+      });
+      if(!promises.length){ showToast('No image found on clipboard. Copy an image first.'); return; }
+      Promise.all(promises).then(function(blobs){
+        var files=blobs.map(function(b,i){ return new File([b], 'pasted-image-'+(i+1)+'.jfif', {type:b.type}); });
+        addFiles(files);
+      });
+    }).catch(function(){ showToast('Could not read clipboard — try pressing Ctrl+V.'); });
+  });
+  window.addEventListener('paste', function(e){
+    if(e.clipboardData && e.clipboardData.files && e.clipboardData.files.length) addFiles(e.clipboardData.files);
+  });
+
+  convertAllBtn.addEventListener('click', convertAll);
+  convertBottomBtn.addEventListener('click', convertAll);
+  downloadAllBtn.addEventListener('click', downloadAllZip);
+  clearBtn.addEventListener('click', function(){
+    items.forEach(function(it){ if(it.url) URL.revokeObjectURL(it.url); if(it.blobUrl) URL.revokeObjectURL(it.blobUrl); });
+    items=[]; fileList.innerHTML=''; fileList.appendChild(emptyState); emptyState.style.display='block'; updateUI(); showToast('Cleared all files.');
+  });
+
+  syncQuality();
+  updateUI();
+})();
+</script>
+</body>
+</html>
